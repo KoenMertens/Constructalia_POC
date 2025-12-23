@@ -1,4 +1,5 @@
 import streamlit as st
+import difflib  # Standaard bibliotheek voor vergelijkingen
 
 # Pagina instellingen
 st.set_page_config(page_title="ArcelorMittal Constructalia POC Bot", layout="centered")
@@ -320,20 +321,20 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("Typ your question (e.g. 'What is XCarb?')..."):
+if prompt := st.chat_input("Copy-paste a slide title here..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Simpele keyword matching
-    query = prompt.lower()
-    response = "I can only answer those questions you provided for the moment, so I only provide information about XCarb, Angelina, Magnelis, Granite, SiCA, offices, construction, silo's and CO2 emission."
-    
-    for key, value in KNOWLEDGE_BASE.items():
-        if key in query:
-            response = value
-            break
+    # Fuzzy matching logica voor exacte slide titels
+    # cutoff=0.3 zorgt dat hij matcht ook bij kleine verschillen
+    matches = difflib.get_close_matches(prompt, KNOWLEDGE_BASE.keys(), n=1, cutoff=0.3)
 
+    if matches:
+        response = KNOWLEDGE_BASE[matches[0]]
+    else:
+        response = "I can only answer those questions provided in the presentation. Please use the exact title of the slide."
+    
     with st.chat_message("assistant"):
         st.markdown(response)
     st.session_state.messages.append({"role": "assistant", "content": response})
